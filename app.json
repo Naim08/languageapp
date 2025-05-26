@@ -1,29 +1,41 @@
 {
   "expo": {
-    "name": "temp_project",
-    "slug": "temp_project",
+    "name": "AI Language Tutor",
+    "slug": "ai-language-tutor",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1F2937"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.languageapp.tutor",
+      "deploymentTarget": "14.0",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone to practice pronunciation with the AI tutor.",
+        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to analyze your pronunciation and provide feedback."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1F2937"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-av"
+    ]
   }
 }
