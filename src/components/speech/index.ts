@@ -1,0 +1,1 @@
+export { SpeechRecognitionDemo } from './SpeechRecognitionDemo';

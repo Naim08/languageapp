@@ -1,14 +1,17 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/theme';
-import { Navigation } from '@/navigation';
+import VoiceTestWithLanguages from './src/components/speech/VoiceTestWithLanguages';
 import './global.css';
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <Navigation />
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <VoiceTestWithLanguages />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

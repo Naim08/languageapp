@@ -28,14 +28,33 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "RECORD_AUDIO"
-      ]
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.languageapp.tutor"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-av"
-    ]
+      "expo-dev-client",
+      "expo-av",
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "This app needs access to your microphone to practice pronunciation with the AI tutor.",
+          "speechRecognitionPermission": "This app uses speech recognition to analyze your pronunciation and provide feedback."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9cca51ba-f32a-469a-bf0f-fe35d07d62a2"
+      }
+    }
   }
 }
