@@ -125,6 +125,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
 
   // Generate waveform path
   const generateWaveformPath = (level: number, offset: number): string => {
+    'worklet';
     const waveRadius = radius * 0.8;
     const points = 60;
     const angleStep = (2 * Math.PI) / points;
