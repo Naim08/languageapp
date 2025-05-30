@@ -32,6 +32,20 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({ onNavigateToTest })
       color: theme.colors.accent,
     },
     {
+      id: 'SpeechDebugger',
+      title: 'Speech Debugger',
+      description: 'Debug speech recognition with detailed logs and diagnostics',
+      icon: '🔍',
+      color: theme.colors.warning,
+    },
+    {
+      id: 'WhisperManager',
+      title: 'Whisper AI Engine',
+      description: 'Local offline speech recognition with Whisper AI models',
+      icon: '🤖',
+      color: '#8B5CF6',
+    },
+    {
       id: 'VoiceTestWithLanguages',
       title: 'Multi-Language Voice Test',
       description: 'Advanced voice testing with comprehensive language support',
@@ -99,7 +113,8 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({ onNavigateToTest })
           <Text style={[styles.infoText, { color: theme.colors.textMuted }]}>
             • <Text style={{ fontWeight: '600' }}>TTS Testing:</Text> Supports English, Hindi, Spanish, French, German{'\n'}
             • <Text style={{ fontWeight: '600' }}>Speech Recognition:</Text> Requires microphone permissions{'\n'}
-            • <Text style={{ fontWeight: '600' }}>Language Support:</Text> Bengali and some Asian languages removed due to platform limitations{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Speech Debugger:</Text> Real-time logging and diagnostics for troubleshooting{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Whisper AI:</Text> Local offline speech recognition with downloadable models{'\n'}
             • <Text style={{ fontWeight: '600' }}>Best Results:</Text> Test in a quiet environment with clear speech
           </Text>
         </View>

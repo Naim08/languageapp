@@ -42,7 +42,7 @@
     },
     "plugins": [
       "expo-dev-client",
-      "expo-av",
+      "expo-speech-recognition",
       [
         "@react-native-voice/voice",
         {

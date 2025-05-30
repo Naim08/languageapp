@@ -12,7 +12,8 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "postinstall": "node scripts/fix-whisper-amx.js || true"
   },
   "dependencies": {
     "@expo/cli": "^0.24.13",
@@ -26,7 +27,9 @@
     "expo": "~53.0.9",
     "expo-av": "^15.1.4",
     "expo-dev-client": "~5.1.8",
+    "expo-file-system": "^18.1.10",
     "expo-speech": "^13.1.7",
+    "expo-speech-recognition": "^2.0.0",
     "expo-status-bar": "~2.2.3",
     "nativewind": "^4.1.23",
     "react": "19.0.0",
@@ -35,7 +38,8 @@
     "react-native-reanimated": "^3.17.5",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.10.0",
-    "react-native-svg": "^15.12.0"
+    "react-native-svg": "^15.12.0",
+    "whisper.rn": "^0.4.0-rc.12"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

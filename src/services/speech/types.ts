@@ -34,6 +34,8 @@ export interface SpeechRecognitionConfig {
   continuousRecognition?: boolean;
   recognitionTimeout?: number;
   audioLevelUpdateInterval?: number;
+  speechTimeout?: number;
+  endSilenceTimeout?: number;
 }
 
 export interface RetryConfig {

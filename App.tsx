@@ -3,13 +3,13 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { ThemeProvider, useTheme } from '@/theme';
-import { TtsTestingDemo, SpeechRecognitionDemo } from './src/components/speech';
+import { TtsTestingDemo, SpeechRecognitionDemo, SpeechDebugger, WhisperManager } from './src/components/speech';
 import VoiceTestWithLanguages from './src/components/speech/VoiceTestWithLanguages';
 import VoiceTestComponent from './src/components/speech/VoiceTestComponent';
 import TestingDashboard from './src/screens/testing/TestingDashboard';
 import './global.css';
 
-type TestComponent = 'dashboard' | 'TtsTestingDemo' | 'SpeechRecognitionDemo' | 'VoiceTestWithLanguages' | 'VoiceTestComponent';
+type TestComponent = 'dashboard' | 'TtsTestingDemo' | 'SpeechRecognitionDemo' | 'VoiceTestWithLanguages' | 'VoiceTestComponent' | 'SpeechDebugger' | 'WhisperManager';
 
 function AppContent() {
   const [activeTest, setActiveTest] = useState<TestComponent>('dashboard');
@@ -33,6 +33,10 @@ function AppContent() {
         return <VoiceTestWithLanguages />;
       case 'VoiceTestComponent':
         return <VoiceTestComponent />;
+      case 'SpeechDebugger':
+        return <SpeechDebugger />;
+      case 'WhisperManager':
+        return <WhisperManager />;
       default:
         return <TestingDashboard onNavigateToTest={handleNavigateToTest} />;
     }
