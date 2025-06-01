@@ -27,6 +27,12 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>ai-language-tutor</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
           <string>com.languageapp.tutor</string>
         </array>
       </dict>
