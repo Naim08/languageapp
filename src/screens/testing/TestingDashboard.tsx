@@ -27,35 +27,35 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({ onNavigateToTest })
     {
       id: 'SpeechRecognitionDemo',
       title: 'Speech Recognition Demo',
-      description: 'Test speech recognition with language switching',
+      description: 'Test OpenAI Whisper speech recognition with language switching',
       icon: '🎤',
       color: theme.colors.accent,
     },
     {
       id: 'SpeechDebugger',
       title: 'Speech Debugger',
-      description: 'Debug speech recognition with detailed logs and diagnostics',
+      description: 'Debug OpenAI Whisper speech recognition with detailed logs',
       icon: '🔍',
       color: theme.colors.warning,
     },
     {
       id: 'WhisperManager',
       title: 'Whisper AI Engine',
-      description: 'Local offline speech recognition with Whisper AI models',
+      description: 'OpenAI Whisper speech recognition via Edge Functions',
       icon: '🤖',
       color: '#8B5CF6',
     },
     {
       id: 'VoiceTestWithLanguages',
       title: 'Multi-Language Voice Test',
-      description: 'Advanced voice testing with comprehensive language support',
+      description: 'Comprehensive voice testing with OpenAI Whisper across languages',
       icon: '🌍',
       color: '#FF6B35',
     },
     {
       id: 'VoiceTestComponent',
       title: 'Basic Voice Test',
-      description: 'Simple voice recognition testing component',
+      description: 'Simple OpenAI Whisper voice recognition testing component',
       icon: '🎙️',
       color: '#4ECDC4',
     },
@@ -111,11 +111,12 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({ onNavigateToTest })
             ℹ️ Testing Information
           </Text>
           <Text style={[styles.infoText, { color: theme.colors.textMuted }]}>
-            • <Text style={{ fontWeight: '600' }}>TTS Testing:</Text> Supports English, Hindi, Spanish, French, German{'\n'}
-            • <Text style={{ fontWeight: '600' }}>Speech Recognition:</Text> Requires microphone permissions{'\n'}
-            • <Text style={{ fontWeight: '600' }}>Speech Debugger:</Text> Real-time logging and diagnostics for troubleshooting{'\n'}
-            • <Text style={{ fontWeight: '600' }}>Whisper AI:</Text> Local offline speech recognition with downloadable models{'\n'}
-            • <Text style={{ fontWeight: '600' }}>Best Results:</Text> Test in a quiet environment with clear speech
+            • <Text style={{ fontWeight: '600' }}>TTS Testing:</Text> OpenAI TTS with 11 voices + Gemini TTS with 30 voices via unified Edge Functions{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Speech Recognition:</Text> OpenAI Whisper via secure Edge Functions{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Speech Debugger:</Text> Real-time logging for OpenAI Whisper troubleshooting{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Whisper AI:</Text> Cloud-based OpenAI Whisper speech recognition{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Best Results:</Text> Test in a quiet environment with clear speech{'\n'}
+            • <Text style={{ fontWeight: '600' }}>Requirements:</Text> Internet connection for AI processing
           </Text>
         </View>
       </ScrollView>

@@ -6,9 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "scheme": "ai-language-tutor",
-    "associatedDomains": ["applinks:upusrhmodjdmwmhvqbtl.supabase.co"],
+    "associatedDomains": [
+      "applinks:upusrhmodjdmwmhvqbtl.supabase.co"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -23,7 +25,9 @@
         "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to analyze your pronunciation and provide feedback."
       },
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       }
     },
     "android": {
@@ -48,12 +52,11 @@
     "plugins": [
       "expo-dev-client",
       "expo-apple-authentication",
-      "expo-speech-recognition",
+      "expo-web-browser",
       [
-        "@react-native-voice/voice",
+        "expo-audio",
         {
-          "microphonePermission": "This app needs access to your microphone to practice pronunciation with the AI tutor.",
-          "speechRecognitionPermission": "This app uses speech recognition to analyze your pronunciation and provide feedback."
+          "microphonePermission": "This app needs access to your microphone to practice pronunciation with the AI tutor."
         }
       ]
     ],

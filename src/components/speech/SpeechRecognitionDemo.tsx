@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { AudioVisualizer } from '@/components/audio';
-import { useTheme } from '@/theme';
-import { Button } from '@/components/common';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { SpeechLanguage, SpeechRecognitionError } from '@/services/speech/types';
 
 const languages: { code: SpeechLanguage; name: string }[] = [
@@ -16,7 +13,6 @@ const languages: { code: SpeechLanguage; name: string }[] = [
 ];
 
 export const SpeechRecognitionDemo: React.FC = () => {
-  const { theme } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<SpeechLanguage>('en-US');
   
   const {
@@ -40,7 +36,7 @@ export const SpeechRecognitionDemo: React.FC = () => {
     },
     onError: (error: SpeechRecognitionError) => {
       console.error('Speech recognition error:', error);
-      Alert.alert('Speech Recognition Error', error.description);
+      Alert.alert('Speech Recognition Error', error.message);
     },
   });
 
@@ -76,24 +72,24 @@ export const SpeechRecognitionDemo: React.FC = () => {
 
   if (!isAvailable) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bgDark }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#1F2937' }}>
         <View style={{ 
           flex: 1, 
           justifyContent: 'center', 
           alignItems: 'center',
-          padding: theme.spacing.lg 
+          padding: 20 
         }}>
           <Text style={{ 
-            color: theme.colors.error,
-            fontSize: theme.typography.h3,
+            color: '#EF4444',
+            fontSize: 20,
             textAlign: 'center',
-            marginBottom: theme.spacing.lg
+            marginBottom: 20
           }}>
             Speech recognition is not available
           </Text>
           <Text style={{ 
-            color: theme.colors.textMuted,
-            fontSize: theme.typography.body,
+            color: '#9CA3AF',
+            fontSize: 16,
             textAlign: 'center'
           }}>
             Please check your device settings and try again.
@@ -104,252 +100,176 @@ export const SpeechRecognitionDemo: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bgDark }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1F2937' }}>
       <ScrollView style={{ flex: 1 }}>
-        <View style={{ 
-          padding: theme.spacing.lg,
-          borderBottomWidth: 1,
-          borderBottomColor: theme.colors.bgCard
-        }}>
+        <View style={{ padding: 20 }}>
           <Text style={{ 
-            color: theme.colors.textDark,
-            fontSize: theme.typography.h2,
+            color: '#FFFFFF',
+            fontSize: 24,
             fontWeight: 'bold',
-            textAlign: 'center',
-            marginBottom: theme.spacing.md
+            marginBottom: 20
           }}>
             Speech Recognition Demo
           </Text>
+
+          {/* Language Selection */}
           <Text style={{ 
-            color: theme.colors.textMuted,
-            fontSize: theme.typography.body,
-            textAlign: 'center'
+            color: '#FFFFFF',
+            fontSize: 18,
+            marginBottom: 15
           }}>
-            Test speech recognition with different languages
+            Select Language:
           </Text>
-        </View>
-
-        <View style={{ padding: theme.spacing.lg }}>
-          <Text style={{ 
-            color: theme.colors.textDark,
-            fontSize: theme.typography.h3,
-            fontWeight: '600',
-            marginBottom: theme.spacing.md
+          <View style={{ 
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 10,
+            marginBottom: 20
           }}>
-            Select Language
-          </Text>
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ 
-              flexDirection: 'row', 
-              gap: theme.spacing.sm,
-              paddingHorizontal: theme.spacing.sm
-            }}>
-              {languages.map((lang) => (
-                <TouchableOpacity
-                  key={lang.code}
-                  onPress={() => handleLanguageChange(lang.code)}
-                  style={{
-                    paddingHorizontal: theme.spacing.lg,
-                    paddingVertical: theme.spacing.md,
-                    borderRadius: theme.borderRadius.md,
-                    backgroundColor: selectedLanguage === lang.code 
-                      ? theme.colors.primary 
-                      : theme.colors.bgCard,
-                    borderWidth: 1,
-                    borderColor: selectedLanguage === lang.code 
-                      ? theme.colors.primary 
-                      : theme.colors.textMuted + '30',
-                  }}
-                >
-                  <Text style={{
-                    color: selectedLanguage === lang.code 
-                      ? theme.colors.textDark 
-                      : theme.colors.textMuted,
-                    fontSize: theme.typography.caption,
-                    fontWeight: '500',
-                    textAlign: 'center'
-                  }}>
-                    {lang.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
+            {languages.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                onPress={() => handleLanguageChange(lang.code)}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  backgroundColor: selectedLanguage === lang.code ? '#3B82F6' : '#374151',
+                  borderWidth: 1,
+                  borderColor: selectedLanguage === lang.code ? '#3B82F6' : '#6B7280',
+                }}
+              >
+                <Text style={{
+                  color: selectedLanguage === lang.code ? '#FFFFFF' : '#9CA3AF',
+                  fontSize: 14,
+                }}>
+                  {lang.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-        <View style={{
-          alignItems: 'center',
-          padding: theme.spacing.lg
-        }}>
-          <AudioVisualizer
-            audioLevel={audioLevel}
-            isListening={isListening}
-            isProcessing={false}
-            size={150}
-            strokeWidth={3}
-            showWaveform={true}
-            animationSpeed="normal"
-          />
-        </View>
-
-        <View style={{ 
-          paddingHorizontal: theme.spacing.lg,
-          marginBottom: theme.spacing.lg
-        }}>
+          {/* Status */}
           <View style={{
-            backgroundColor: theme.colors.bgCard,
-            padding: theme.spacing.lg,
-            borderRadius: theme.borderRadius.lg,
-            marginBottom: theme.spacing.md
+            backgroundColor: '#374151',
+            padding: 20,
+            borderRadius: 12,
+            marginBottom: 20
           }}>
-            <Text style={{ 
-              color: theme.colors.textDark,
-              fontSize: theme.typography.body,
-              fontWeight: '600',
-              marginBottom: theme.spacing.sm
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: 16,
+              marginBottom: 8
             }}>
-              Status
+              Status: {isListening ? 'Listening...' : 'Ready'}
             </Text>
-            <Text style={{ 
-              color: isListening ? theme.colors.success : theme.colors.textMuted,
-              fontSize: theme.typography.body
+            <Text style={{
+              color: isListening ? '#10B981' : '#9CA3AF',
+              fontSize: 16
             }}>
-              {isListening ? 'Listening...' : 'Ready to listen'}
-            </Text>
-            <Text style={{ 
-              color: theme.colors.textMuted,
-              fontSize: theme.typography.caption,
-              marginTop: theme.spacing.xs
-            }}>
-              Language: {currentLanguage} | Audio Level: {Math.round(audioLevel)}%
+              Audio Level: {Math.round(audioLevel * 100)}%
             </Text>
           </View>
 
-          {partialTranscript && (
-            <View style={{
-              backgroundColor: theme.colors.accent + '20',
-              padding: theme.spacing.md,
-              borderRadius: theme.borderRadius.md,
-              borderWidth: 1,
-              borderColor: theme.colors.accent,
-              marginBottom: theme.spacing.md
+          {/* Controls */}
+          <View style={{ 
+            flexDirection: 'row',
+            gap: 10,
+            marginBottom: 20
+          }}>
+            <TouchableOpacity
+              onPress={isListening ? handleStopListening : handleStartListening}
+              style={{
+                flex: 1,
+                backgroundColor: isListening ? '#EF4444' : '#10B981',
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>
+                {isListening ? 'Stop' : 'Start'}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={handleClearTranscript}
+              style={{
+                backgroundColor: '#6B7280',
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16 }}>
+                Clear
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Transcript */}
+          <View style={{
+            backgroundColor: '#374151',
+            padding: 20,
+            borderRadius: 12,
+            marginBottom: 20
+          }}>
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: 16,
+              marginBottom: 10
             }}>
-              <Text style={{ 
-                color: theme.colors.textDark,
-                fontSize: theme.typography.caption,
-                fontWeight: '600',
-                marginBottom: theme.spacing.xs
+              Transcript:
+            </Text>
+            <Text style={{
+              color: transcript ? '#FFFFFF' : '#9CA3AF',
+              fontSize: 16,
+              minHeight: 50
+            }}>
+              {transcript || 'No speech detected yet...'}
+            </Text>
+          </View>
+
+          {/* Error Display */}
+          {error && (
+            <View style={{
+              margin: 20,
+              padding: 20,
+              backgroundColor: '#7F1D1D',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: '#EF4444',
+            }}>
+              <Text style={{
+                color: '#EF4444',
+                fontSize: 16,
+                marginBottom: 8
               }}>
-                Partial Result:
+                Error: {error.message}
               </Text>
-              <Text style={{ 
-                color: theme.colors.textDark,
-                fontSize: theme.typography.body,
-                fontStyle: 'italic'
+              <Text style={{
+                color: '#EF4444',
+                fontSize: 14,
+                marginBottom: 15
               }}>
-                {partialTranscript}
+                Code: {error.code}
               </Text>
+              <TouchableOpacity
+                onPress={clearError}
+                style={{
+                  backgroundColor: '#EF4444',
+                  padding: 12,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 16 }}>
+                  Dismiss
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
-
-          <View style={{
-            backgroundColor: theme.colors.bgCard,
-            padding: theme.spacing.lg,
-            borderRadius: theme.borderRadius.lg,
-            minHeight: 120
-          }}>
-            <View style={{ 
-              flexDirection: 'row', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: theme.spacing.md
-            }}>
-              <Text style={{ 
-                color: theme.colors.textDark,
-                fontSize: theme.typography.body,
-                fontWeight: '600'
-              }}>
-                Transcript
-              </Text>
-              {transcript && (
-                <TouchableOpacity onPress={handleClearTranscript}>
-                  <Text style={{ 
-                    color: theme.colors.accent,
-                    fontSize: theme.typography.caption,
-                    fontWeight: '500'
-                  }}>
-                    Clear
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            <ScrollView style={{ maxHeight: 100 }}>
-              <Text style={{ 
-                color: transcript ? theme.colors.textDark : theme.colors.textMuted,
-                fontSize: theme.typography.body,
-                lineHeight: 24
-              }}>
-                {transcript || 'Your speech will appear here...'}
-              </Text>
-            </ScrollView>
-          </View>
         </View>
-
-        <View style={{ 
-          paddingHorizontal: theme.spacing.lg,
-          paddingBottom: theme.spacing.xl,
-          gap: theme.spacing.md
-        }}>
-          <Button
-            title={isListening ? 'Stop Listening' : 'Start Listening'}
-            variant={isListening ? 'secondary' : 'primary'}
-            size="large"
-            onPress={isListening ? handleStopListening : handleStartListening}
-          />
-          
-          <Button
-            title="Cancel"
-            variant="ghost"
-            size="medium"
-            onPress={cancel}
-            disabled={!isListening}
-          />
-        </View>
-
-        {error && (
-          <View style={{
-            margin: theme.spacing.lg,
-            padding: theme.spacing.lg,
-            backgroundColor: theme.colors.error + '20',
-            borderRadius: theme.borderRadius.lg,
-            borderWidth: 1,
-            borderColor: theme.colors.error,
-          }}>
-            <Text style={{
-              color: theme.colors.error,
-              fontSize: theme.typography.body,
-              fontWeight: '600',
-              marginBottom: theme.spacing.sm
-            }}>
-              Error: {error.code}
-            </Text>
-            <Text style={{
-              color: theme.colors.error,
-              fontSize: theme.typography.caption,
-              marginBottom: theme.spacing.md
-            }}>
-              {error.description}
-            </Text>
-            <Button
-              title="Dismiss Error"
-              variant="ghost"
-              size="small"
-              onPress={clearError}
-            />
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );

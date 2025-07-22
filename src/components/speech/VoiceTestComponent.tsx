@@ -1,278 +1,477 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
-import Voice from '@react-native-voice/voice';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import { AudioVisualizer } from '@/components/audio';
+import { useTheme } from '@/theme';
+import { Button } from '@/components/common';
+import { SpeechLanguage } from '@/services/speech/types';
 
 const VoiceTestComponent: React.FC = () => {
-  const [isListening, setIsListening] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
-  const [partialResults, setPartialResults] = useState<string[]>([]);
-  const [error, setError] = useState<string>('');
-  const [isAvailable, setIsAvailable] = useState(false);
+  const { theme } = useTheme();
+  const [selectedLanguage, setSelectedLanguage] = useState<SpeechLanguage>('en-US');
+  const [sessionCount, setSessionCount] = useState(0);
+  const [totalWords, setTotalWords] = useState(0);
 
-  useEffect(() => {
-    // Initialize Voice
-    const initializeVoice = async () => {
-      try {
-        const available = await Voice.isAvailable();
-        setIsAvailable(!!available);
-        console.log('Voice recognition available:', available);
-      } catch (e) {
-        console.error('Voice initialization error:', e);
-        setError('Voice recognition not available');
+  const {
+    isListening,
+    isAvailable,
+    transcript,
+    partialTranscript,
+    error,
+    audioLevel,
+    currentLanguage,
+    start,
+    stop,
+    switchLanguage,
+    clearTranscript,
+    clearError,
+  } = useSpeechRecognition({
+    language: selectedLanguage,
+    onResult: (result) => {
+      console.log('Basic voice test result:', result);
+      if (result.trim()) {
+        setSessionCount(prev => prev + 1);
+        setTotalWords(prev => prev + result.trim().split(' ').length);
       }
-    };
+    },
+    onError: (error) => {
+      console.error('Basic voice test error:', error);
+      Alert.alert('Speech Recognition Error', error.message || 'Unknown error');
+    },
+  });
 
-    // Set up voice event handlers
-    Voice.onSpeechStart = () => {
-      console.log('Speech started');
-      setIsListening(true);
-    };
-
-    Voice.onSpeechEnd = () => {
-      console.log('Speech ended');
-      setIsListening(false);
-    };
-
-    Voice.onSpeechResults = (e) => {
-      console.log('Speech results:', e.value);
-      setResults(e.value || []);
-    };
-
-    Voice.onSpeechPartialResults = (e) => {
-      console.log('Partial results:', e.value);
-      setPartialResults(e.value || []);
-    };
-
-    Voice.onSpeechError = (e) => {
-      console.error('Speech error:', e.error);
-      setError(e.error?.message || 'Speech recognition error');
-      setIsListening(false);
-    };
-
-    initializeVoice();
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, []);
-
-  const startListening = async () => {
+  const handleLanguageChange = async (language: SpeechLanguage) => {
     try {
-      setError('');
-      setResults([]);
-      setPartialResults([]);
-      await Voice.start('en-US');
-    } catch (e) {
-      console.error('Start listening error:', e);
-      setError('Failed to start listening');
+      setSelectedLanguage(language);
+      await switchLanguage(language);
+    } catch (error) {
+      console.error('Failed to switch language:', error);
     }
   };
 
-  const stopListening = async () => {
+  const handleStartListening = async () => {
     try {
-      await Voice.stop();
-    } catch (e) {
-      console.error('Stop listening error:', e);
+      clearError();
+      await start(selectedLanguage);
+    } catch (error) {
+      console.error('Failed to start listening:', error);
     }
   };
 
-  const clearResults = () => {
-    setResults([]);
-    setPartialResults([]);
-    setError('');
+  const handleStopListening = async () => {
+    try {
+      await stop();
+    } catch (error) {
+      console.error('Failed to stop listening:', error);
+    }
   };
+
+  const resetStats = () => {
+    setSessionCount(0);
+    setTotalWords(0);
+    clearTranscript();
+  };
+
+  if (!isAvailable) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bgDark }}>
+        <View style={{ 
+          flex: 1, 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          padding: theme.spacing.lg 
+        }}>
+          <Text style={{ 
+            color: theme.colors.error,
+            fontSize: theme.typography.h3,
+            textAlign: 'center',
+            marginBottom: theme.spacing.lg
+          }}>
+            Speech recognition is not available
+          </Text>
+          <Text style={{ 
+            color: theme.colors.textMuted,
+            fontSize: theme.typography.body,
+            textAlign: 'center'
+          }}>
+            Please check your device settings and try again.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>React Native Voice Test</Text>
-      
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Status:</Text>
-        <Text style={[styles.statusText, isAvailable ? styles.available : styles.unavailable]}>
-          {isAvailable ? 'Available' : 'Not Available'}
-        </Text>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.button, isListening ? styles.stopButton : styles.startButton]}
-          onPress={isListening ? stopListening : startListening}
-          disabled={!isAvailable}
-        >
-          <Text style={styles.buttonText}>
-            {isListening ? 'Stop Listening' : 'Start Listening'}
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bgDark }}>
+      <ScrollView style={{ flex: 1 }}>
+        <View style={{ 
+          padding: theme.spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.bgCard
+        }}>
+          <Text style={{ 
+            color: theme.colors.textDark,
+            fontSize: theme.typography.h2,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginBottom: theme.spacing.md
+          }}>
+            Basic Voice Test
           </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.clearButton} onPress={clearResults}>
-          <Text style={styles.buttonText}>Clear Results</Text>
-        </TouchableOpacity>
-      </View>
-
-      {isListening && (
-        <View style={styles.listeningIndicator}>
-          <Text style={styles.listeningText}>🎤 Listening...</Text>
+          <Text style={{ 
+            color: theme.colors.textMuted,
+            fontSize: theme.typography.body,
+            textAlign: 'center'
+          }}>
+            Simple voice recognition testing component
+          </Text>
         </View>
-      )}
 
-      {partialResults.length > 0 && (
-        <View style={styles.resultsContainer}>
-          <Text style={styles.resultsTitle}>Partial Results:</Text>
-          {partialResults.map((result, index) => (
-            <Text key={index} style={styles.partialResult}>
-              {result}
+        {/* Stats Panel */}
+        <View style={{ 
+          padding: theme.spacing.lg,
+          backgroundColor: theme.colors.bgCard,
+          margin: theme.spacing.lg,
+          borderRadius: theme.borderRadius.md
+        }}>
+          <Text style={{ 
+            color: theme.colors.textDark,
+            fontSize: theme.typography.h3,
+            fontWeight: '600',
+            marginBottom: theme.spacing.md,
+            textAlign: 'center'
+          }}>
+            Session Statistics
+          </Text>
+          
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'space-around',
+            marginBottom: theme.spacing.md
+          }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ 
+                color: theme.colors.primary,
+                fontSize: theme.typography.h2,
+                fontWeight: 'bold'
+              }}>
+                {sessionCount}
+              </Text>
+              <Text style={{ 
+                color: theme.colors.textMuted,
+                fontSize: theme.typography.caption
+              }}>
+                Sessions
+              </Text>
+            </View>
+            
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ 
+                color: theme.colors.accent,
+                fontSize: theme.typography.h2,
+                fontWeight: 'bold'
+              }}>
+                {totalWords}
+              </Text>
+              <Text style={{ 
+                color: theme.colors.textMuted,
+                fontSize: theme.typography.caption
+              }}>
+                Total Words
+              </Text>
+            </View>
+            
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ 
+                color: isListening ? theme.colors.success : theme.colors.textMuted,
+                fontSize: theme.typography.h2,
+                fontWeight: 'bold'
+              }}>
+                {audioLevel.toFixed(1)}
+              </Text>
+              <Text style={{ 
+                color: theme.colors.textMuted,
+                fontSize: theme.typography.caption
+              }}>
+                Audio Level
+              </Text>
+            </View>
+          </View>
+
+          <Button
+            title="Reset Statistics"
+            onPress={resetStats}
+            variant="secondary"
+            style={{ marginTop: theme.spacing.sm }}
+          />
+        </View>
+
+        {/* Language Selection */}
+        <View style={{ padding: theme.spacing.lg, paddingTop: 0 }}>
+          <Text style={{ 
+            color: theme.colors.textDark,
+            fontSize: theme.typography.h3,
+            fontWeight: '600',
+            marginBottom: theme.spacing.md
+          }}>
+            Language: {currentLanguage}
+          </Text>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ 
+              flexDirection: 'row', 
+              gap: theme.spacing.sm,
+              paddingHorizontal: theme.spacing.sm
+            }}>
+              {(['en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR'] as SpeechLanguage[]).map((lang) => (
+                <TouchableOpacity
+                  key={lang}
+                  style={{
+                    paddingHorizontal: theme.spacing.md,
+                    paddingVertical: theme.spacing.sm,
+                    borderRadius: theme.borderRadius.md,
+                    backgroundColor: selectedLanguage === lang ? theme.colors.primary : theme.colors.bgCard,
+                    borderWidth: 1,
+                    borderColor: selectedLanguage === lang ? theme.colors.primary : theme.colors.bgCard,
+                  }}
+                  onPress={() => handleLanguageChange(lang)}
+                >
+                  <Text style={{
+                    color: selectedLanguage === lang ? theme.colors.textLight : theme.colors.textDark,
+                    fontWeight: selectedLanguage === lang ? '600' : 'normal',
+                  }}>
+                    {lang}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Voice Visualizer and Controls */}
+        <View style={{ 
+          padding: theme.spacing.lg,
+          paddingTop: 0,
+          alignItems: 'center'
+        }}>
+          <AudioVisualizer
+            audioLevel={audioLevel}
+            isListening={isListening}
+            size={150}
+            strokeWidth={4}
+            showWaveform={true}
+          />
+          
+          <View style={{ 
+            flexDirection: 'row', 
+            gap: theme.spacing.sm,
+            marginTop: theme.spacing.lg,
+            width: '100%'
+          }}>
+            <Button
+              title={isListening ? "Stop Listening" : "Start Listening"}
+              onPress={isListening ? handleStopListening : handleStartListening}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title="Clear"
+              onPress={clearTranscript}
+              variant="secondary"
+              style={{ flex: 1 }}
+            />
+          </View>
+
+          {isListening && (
+            <Text style={{ 
+              color: theme.colors.success,
+              fontSize: theme.typography.body,
+              marginTop: theme.spacing.md,
+              textAlign: 'center'
+            }}>
+              🎤 Listening in {currentLanguage}...
             </Text>
-          ))}
+          )}
         </View>
-      )}
 
-      {results.length > 0 && (
-        <View style={styles.resultsContainer}>
-          <Text style={styles.resultsTitle}>Final Results:</Text>
-          {results.map((result, index) => (
-            <Text key={index} style={styles.result}>
-              {result}
+        {/* Transcript Display */}
+        {(transcript || partialTranscript) && (
+          <View style={{ 
+            padding: theme.spacing.lg,
+            paddingTop: 0
+          }}>
+            <Text style={{ 
+              color: theme.colors.textDark,
+              fontSize: theme.typography.h3,
+              fontWeight: '600',
+              marginBottom: theme.spacing.md
+            }}>
+              Transcript
             </Text>
-          ))}
-        </View>
-      )}
+            
+            <View style={{
+              backgroundColor: theme.colors.bgCard,
+              padding: theme.spacing.md,
+              borderRadius: theme.borderRadius.md,
+              minHeight: 100,
+            }}>
+              {transcript && (
+                <View style={{ marginBottom: theme.spacing.sm }}>
+                  <Text style={{ 
+                    color: theme.colors.success,
+                    fontSize: theme.typography.caption,
+                    fontWeight: '600',
+                    marginBottom: theme.spacing.xs
+                  }}>
+                    FINAL RESULT:
+                  </Text>
+                  <Text style={{ 
+                    color: theme.colors.textDark,
+                    fontSize: theme.typography.body,
+                    lineHeight: 24
+                  }}>
+                    {transcript}
+                  </Text>
+                </View>
+              )}
+              
+              {partialTranscript && (
+                <View>
+                  <Text style={{ 
+                    color: theme.colors.warning,
+                    fontSize: theme.typography.caption,
+                    fontWeight: '600',
+                    marginBottom: theme.spacing.xs
+                  }}>
+                    PARTIAL RESULT:
+                  </Text>
+                  <Text style={{ 
+                    color: theme.colors.textMuted,
+                    fontSize: theme.typography.body,
+                    fontStyle: 'italic',
+                    lineHeight: 24
+                  }}>
+                    {partialTranscript}
+                  </Text>
+                </View>
+              )}
+              
+              {!transcript && !partialTranscript && (
+                <Text style={{ 
+                  color: theme.colors.textMuted,
+                  fontSize: theme.typography.body,
+                  fontStyle: 'italic',
+                  textAlign: 'center'
+                }}>
+                  Start speaking to see your words appear here...
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
 
-      {error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Error:</Text>
-          <Text style={styles.errorText}>{error}</Text>
+        {/* Status Information */}
+        <View style={{ 
+          padding: theme.spacing.lg,
+          paddingTop: 0
+        }}>
+          <Text style={{ 
+            color: theme.colors.textDark,
+            fontSize: theme.typography.h3,
+            fontWeight: '600',
+            marginBottom: theme.spacing.md
+          }}>
+            Status
+          </Text>
+          
+          <View style={{
+            backgroundColor: theme.colors.bgCard,
+            padding: theme.spacing.md,
+            borderRadius: theme.borderRadius.md,
+          }}>
+            <View style={{ gap: theme.spacing.sm }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: theme.colors.textMuted }}>Recognition Available:</Text>
+                <Text style={{ 
+                  color: isAvailable ? theme.colors.success : theme.colors.error,
+                  fontWeight: '600'
+                }}>
+                  {isAvailable ? 'YES' : 'NO'}
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: theme.colors.textMuted }}>Currently Listening:</Text>
+                <Text style={{ 
+                  color: isListening ? theme.colors.success : theme.colors.textDark,
+                  fontWeight: '600'
+                }}>
+                  {isListening ? 'YES' : 'NO'}
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: theme.colors.textMuted }}>Current Language:</Text>
+                <Text style={{ 
+                  color: theme.colors.textDark,
+                  fontWeight: '600'
+                }}>
+                  {currentLanguage}
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: theme.colors.textMuted }}>Has Error:</Text>
+                <Text style={{ 
+                  color: error ? theme.colors.error : theme.colors.success,
+                  fontWeight: '600'
+                }}>
+                  {error ? 'YES' : 'NO'}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
-      ) : null}
-    </ScrollView>
+
+        {/* Error Display */}
+        {error && (
+          <View style={{ 
+            padding: theme.spacing.lg,
+            paddingTop: 0
+          }}>
+            <View style={{
+              backgroundColor: theme.colors.error + '20',
+              padding: theme.spacing.md,
+              borderRadius: theme.borderRadius.md,
+              borderLeftWidth: 4,
+              borderLeftColor: theme.colors.error,
+            }}>
+              <Text style={{ 
+                color: theme.colors.error,
+                fontSize: theme.typography.body,
+                fontWeight: '600',
+                marginBottom: theme.spacing.sm
+              }}>
+                Error Details
+              </Text>
+              <Text style={{ 
+                color: theme.colors.error,
+                fontSize: theme.typography.body
+              }}>
+                {error.message || 'Unknown error occurred'}
+              </Text>
+              
+              <Button
+                title="Clear Error"
+                onPress={clearError}
+                variant="secondary"
+                style={{ marginTop: theme.spacing.md }}
+              />
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#333',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  statusLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 10,
-    color: '#333',
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  available: {
-    color: '#4CAF50',
-  },
-  unavailable: {
-    color: '#F44336',
-  },
-  buttonContainer: {
-    marginBottom: 20,
-  },
-  button: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  startButton: {
-    backgroundColor: '#4CAF50',
-  },
-  stopButton: {
-    backgroundColor: '#F44336',
-  },
-  clearButton: {
-    backgroundColor: '#2196F3',
-    padding: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  listeningIndicator: {
-    backgroundColor: '#FFF3CD',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FFC107',
-  },
-  listeningText: {
-    fontSize: 18,
-    color: '#856404',
-  },
-  resultsContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  resultsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  result: {
-    fontSize: 16,
-    padding: 8,
-    backgroundColor: '#E8F5E8',
-    borderRadius: 4,
-    marginBottom: 5,
-    color: '#2E7D32',
-  },
-  partialResult: {
-    fontSize: 16,
-    padding: 8,
-    backgroundColor: '#FFF3E0',
-    borderRadius: 4,
-    marginBottom: 5,
-    color: '#F57C00',
-    fontStyle: 'italic',
-  },
-  errorContainer: {
-    backgroundColor: '#FFEBEE',
-    padding: 15,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F44336',
-  },
-  errorTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#C62828',
-    marginBottom: 5,
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#D32F2F',
-  },
-});
 
 export default VoiceTestComponent;

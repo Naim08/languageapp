@@ -3,7 +3,7 @@ import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'r
 import { useTheme } from '@/theme';
 import { Button, Card } from '@/components/common';
 import { AudioVisualizer } from '@/components/audio';
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { SpeechLanguage, SpeechRecognitionError } from '@/services/speech/types';
 
 interface ConversationMessage {
@@ -66,7 +66,7 @@ export const ConversationScreen: React.FC = () => {
   function handleSpeechError(error: SpeechRecognitionError) {
     Alert.alert(
       'Speech Recognition Error',
-      error.description,
+      error.message,
       [
         { text: 'OK', onPress: clearError }
       ]
@@ -448,7 +448,7 @@ export const ConversationScreen: React.FC = () => {
                 color: theme.colors.error,
                 fontSize: theme.typography.caption
               }}>
-                {error.description}
+                {error.message}
               </Text>
             </View>
           )}

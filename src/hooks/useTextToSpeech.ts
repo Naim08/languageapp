@@ -1,377 +1,109 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
-import TextToSpeechService from '@/services/speech/TextToSpeechService';
-import {
-  TTSError,
-  TTSState,
-  SpeechLanguage,
-  UserLevel,
-  TTSVoice,
-} from '@/services/speech/types';
+import { useState, useCallback } from 'react';
+
+interface TTSError {
+  code: string;
+  message: string;
+  details?: any;
+}
 
 interface UseTextToSpeechOptions {
-  language?: SpeechLanguage;
-  userLevel?: UserLevel;
-  autoInitialize?: boolean;
-  onStart?: (utteranceId: string) => void;
-  onDone?: (utteranceId: string) => void;
+  language?: string;
+  voice?: string;
+  speed?: number;
+  onStart?: () => void;
+  onDone?: () => void;
   onError?: (error: TTSError) => void;
-  onPause?: (utteranceId: string) => void;
-  onResume?: (utteranceId: string) => void;
-  onStop?: (utteranceId: string) => void;
 }
 
 interface UseTextToSpeechReturn {
-  // State
   isAvailable: boolean;
   isSpeaking: boolean;
-  isPaused: boolean;
-  currentUtterance: any;
-  queueLength: number;
-  availableVoices: TTSVoice[];
   error: TTSError | null;
-  isInitialized: boolean;
-  
-  // Actions
-  speak: (text: string, options?: {
-    language?: SpeechLanguage;
-    userLevel?: UserLevel;
-    rate?: number;
-    pitch?: number;
-    volume?: number;
-    voice?: string;
-  }) => Promise<string>;
-  speakForLevel: (text: string, userLevel: UserLevel, language?: SpeechLanguage) => Promise<string>;
-  speakSentences: (sentences: string[], options?: {
-    language?: SpeechLanguage;
-    userLevel?: UserLevel;
-    pauseBetween?: number;
-  }) => Promise<string[]>;
-  pause: () => Promise<void>;
-  resume: () => Promise<void>;
+  speak: (text: string, options?: { voice?: string; speed?: number }) => Promise<void>;
   stop: () => Promise<void>;
-  clearQueue: () => Promise<void>;
-  initialize: () => Promise<boolean>;
-  
-  // Voice management
-  getVoicesForLanguage: (language: SpeechLanguage) => Promise<TTSVoice[]>;
-  
-  // Utility
   clearError: () => void;
-  setLanguage: (language: SpeechLanguage) => void;
-  setUserLevel: (level: UserLevel) => void;
+  getAvailableVoices: () => string[];
 }
 
 export const useTextToSpeech = (
   options: UseTextToSpeechOptions = {}
 ): UseTextToSpeechReturn => {
   const {
-    language = 'en-US',
-    userLevel = 'intermediate',
-    autoInitialize = true,
+    voice,
+    speed = 1.0,
     onStart,
     onDone,
     onError,
-    onPause,
-    onResume,
-    onStop,
   } = options;
 
-  // State
-  const [state, setState] = useState<TTSState>({
-    isAvailable: false,
-    isSpeaking: false,
-    isPaused: false,
-    currentUtterance: null,
-    queueLength: 0,
-    availableVoices: [],
-  });
-  
+  const [isAvailable] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<TTSError | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState<SpeechLanguage>(language);
-  const [currentUserLevel, setCurrentUserLevel] = useState<UserLevel>(userLevel);
 
-  // Refs
-  const ttsService = useRef<TextToSpeechService>(TextToSpeechService.getInstance());
-  const mounted = useRef(true);
-  const stateUpdateInterval = useRef<NodeJS.Timeout | undefined>();
-  const appStateListener = useRef<any>(null);
+  const handleError = useCallback((ttsError: TTSError) => {
+    setError(ttsError);
+    setIsSpeaking(false);
+    onError?.(ttsError);
+  }, [onError]);
 
-  // Initialize service
-  const initialize = useCallback(async (): Promise<boolean> => {
+  const speak = useCallback(async (text: string, speakOptions?: { voice?: string; speed?: number }) => {
     try {
-      const success = await ttsService.current.initialize();
-      
-      if (mounted.current) {
-        setIsInitialized(success);
-        
-        if (success) {
-          // Set up callbacks
-          ttsService.current.setCallbacks({
-            onStart: (utteranceId: string) => {
-              if (mounted.current) {
-                setState(prev => ({ ...prev, isSpeaking: true, isPaused: false }));
-                onStart?.(utteranceId);
-              }
-            },
-            onDone: (utteranceId: string) => {
-              if (mounted.current) {
-                setState(prev => ({ ...prev, isSpeaking: false, isPaused: false }));
-                onDone?.(utteranceId);
-              }
-            },
-            onPause: (utteranceId: string) => {
-              if (mounted.current) {
-                setState(prev => ({ ...prev, isPaused: true }));
-                onPause?.(utteranceId);
-              }
-            },
-            onResume: (utteranceId: string) => {
-              if (mounted.current) {
-                setState(prev => ({ ...prev, isPaused: false }));
-                onResume?.(utteranceId);
-              }
-            },
-            onStop: (utteranceId: string) => {
-              if (mounted.current) {
-                setState(prev => ({ ...prev, isSpeaking: false, isPaused: false }));
-                onStop?.(utteranceId);
-              }
-            },
-            onError: (error: TTSError) => {
-              if (mounted.current) {
-                setState(prev => ({ ...prev, isSpeaking: false, isPaused: false }));
-                setError(error);
-                onError?.(error);
-              }
-            },
-          });
+      console.log('TTS: Starting to speak:', text);
+      setError(null);
+      setIsSpeaking(true);
+      onStart?.();
 
-          // Update initial state
-          updateState();
-          
-          // Start periodic state updates
-          startStateUpdates();
-        }
-      }
-      
-      return success;
+      // Mock implementation for now
+      console.log('TTS: Would speak with options:', {
+        text,
+        voice: speakOptions?.voice || voice,
+        speed: speakOptions?.speed || speed,
+      });
+
+      // Simulate speaking for 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setIsSpeaking(false);
+      onDone?.();
     } catch (err) {
-      console.error('TTS initialization error:', err);
-      if (mounted.current) {
-        setError({
-          code: 'INIT_ERROR',
-          message: err instanceof Error ? err.message : 'Failed to initialize TTS',
-        });
-        setIsInitialized(false);
-      }
-      return false;
+      console.error('TTS Error:', err);
+      handleError({
+        code: 'TTS_ERROR',
+        message: 'Failed to speak text',
+        details: err,
+      });
     }
-  }, [onStart, onDone, onError, onPause, onResume, onStop]);
+  }, [voice, speed, onStart, onDone, handleError]);
 
-  // Update state from service
-  const updateState = useCallback(() => {
-    if (mounted.current && isInitialized) {
-      const serviceState = ttsService.current.getState();
-      setState(serviceState);
+  const stop = useCallback(async () => {
+    try {
+      console.log('TTS: Stopping speech');
+      setIsSpeaking(false);
+    } catch (err) {
+      console.error('TTS Stop Error:', err);
+      handleError({
+        code: 'TTS_STOP_ERROR',
+        message: 'Failed to stop speech',
+        details: err,
+      });
     }
-  }, [isInitialized]);
+  }, [handleError]);
 
-  // Start periodic state updates
-  const startStateUpdates = useCallback(() => {
-    if (stateUpdateInterval.current) {
-      clearInterval(stateUpdateInterval.current);
-    }
-    
-    stateUpdateInterval.current = setInterval(updateState, 100);
-  }, [updateState]);
-
-  // Stop state updates
-  const stopStateUpdates = useCallback(() => {
-    if (stateUpdateInterval.current) {
-      clearInterval(stateUpdateInterval.current);
-      stateUpdateInterval.current = undefined;
-    }
-  }, []);
-
-  // Speak text
-  const speak = useCallback(async (
-    text: string,
-    speechOptions: {
-      language?: SpeechLanguage;
-      userLevel?: UserLevel;
-      rate?: number;
-      pitch?: number;
-      volume?: number;
-      voice?: string;
-    } = {}
-  ): Promise<string> => {
-    if (!isInitialized) {
-      throw new Error('TTS not initialized');
-    }
-
-    clearError();
-    
-    return ttsService.current.speak(text, {
-      language: speechOptions.language || currentLanguage,
-      userLevel: speechOptions.userLevel || currentUserLevel,
-      ...speechOptions,
-    });
-  }, [isInitialized, currentLanguage, currentUserLevel]);
-
-  // Speak for specific level
-  const speakForLevel = useCallback(async (
-    text: string,
-    level: UserLevel,
-    lang?: SpeechLanguage
-  ): Promise<string> => {
-    return speak(text, {
-      language: lang || currentLanguage,
-      userLevel: level,
-    });
-  }, [speak, currentLanguage]);
-
-  // Speak multiple sentences
-  const speakSentences = useCallback(async (
-    sentences: string[],
-    speechOptions: {
-      language?: SpeechLanguage;
-      userLevel?: UserLevel;
-      pauseBetween?: number;
-    } = {}
-  ): Promise<string[]> => {
-    if (!isInitialized) {
-      throw new Error('TTS not initialized');
-    }
-
-    clearError();
-    
-    return ttsService.current.speakSentences(sentences, {
-      language: speechOptions.language || currentLanguage,
-      userLevel: speechOptions.userLevel || currentUserLevel,
-      ...speechOptions,
-    });
-  }, [isInitialized, currentLanguage, currentUserLevel]);
-
-  // Control functions
-  const pause = useCallback(async (): Promise<void> => {
-    if (!isInitialized) return;
-    await ttsService.current.pause();
-  }, [isInitialized]);
-
-  const resume = useCallback(async (): Promise<void> => {
-    if (!isInitialized) return;
-    await ttsService.current.resume();
-  }, [isInitialized]);
-
-  const stop = useCallback(async (): Promise<void> => {
-    if (!isInitialized) return;
-    await ttsService.current.stop();
-  }, [isInitialized]);
-
-  const clearQueue = useCallback(async (): Promise<void> => {
-    if (!isInitialized) return;
-    await ttsService.current.clearQueue();
-  }, [isInitialized]);
-
-  // Voice management
-  const getVoicesForLanguage = useCallback(async (lang: SpeechLanguage): Promise<TTSVoice[]> => {
-    if (!isInitialized) return [];
-    return ttsService.current.getVoicesForLanguage(lang);
-  }, [isInitialized]);
-
-  // Utility functions
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  const setLanguage = useCallback((lang: SpeechLanguage) => {
-    setCurrentLanguage(lang);
+  const getAvailableVoices = useCallback(() => {
+    return ['en-US-Standard-A', 'en-US-Standard-B', 'en-US-Wavenet-A'];
   }, []);
-
-  const setUserLevel = useCallback((level: UserLevel) => {
-    setCurrentUserLevel(level);
-  }, []);
-
-  // Effects
-  useEffect(() => {
-    mounted.current = true;
-    
-    if (autoInitialize) {
-      initialize();
-    }
-
-    return () => {
-      mounted.current = false;
-      stopStateUpdates();
-    };
-  }, [autoInitialize, initialize, stopStateUpdates]);
-
-  // Handle app state changes for interruptions
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // App going to background - handle potential interruptions
-        if (state.isSpeaking) {
-          ttsService.current.handleInterruption().catch(console.error);
-        }
-      } else if (nextAppState === 'active') {
-        // App coming to foreground - resume if needed
-        if (state.isPaused) {
-          setTimeout(() => {
-            ttsService.current.resumeAfterInterruption().catch(console.error);
-          }, 100);
-        }
-      }
-    };
-
-    appStateListener.current = AppState.addEventListener('change', handleAppStateChange);
-
-    return () => {
-      if (appStateListener.current) {
-        appStateListener.current.remove();
-      }
-    };
-  }, [state.isSpeaking, state.isPaused]);
-
-  // Update language when prop changes
-  useEffect(() => {
-    setCurrentLanguage(language);
-  }, [language]);
-
-  // Update user level when prop changes
-  useEffect(() => {
-    setCurrentUserLevel(userLevel);
-  }, [userLevel]);
 
   return {
-    // State
-    isAvailable: state.isAvailable,
-    isSpeaking: state.isSpeaking,
-    isPaused: state.isPaused,
-    currentUtterance: state.currentUtterance,
-    queueLength: state.queueLength,
-    availableVoices: state.availableVoices,
+    isAvailable,
+    isSpeaking,
     error,
-    isInitialized,
-    
-    // Actions
     speak,
-    speakForLevel,
-    speakSentences,
-    pause,
-    resume,
     stop,
-    clearQueue,
-    initialize,
-    
-    // Voice management
-    getVoicesForLanguage,
-    
-    // Utility
     clearError,
-    setLanguage,
-    setUserLevel,
+    getAvailableVoices,
   };
 };

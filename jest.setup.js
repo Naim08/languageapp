@@ -1,6 +1,10 @@
 import 'react-native-gesture-handler/jestSetup';
 
-// Mock expo-speech
+// Set global variables required by React Native
+global.__DEV__ = true;
+
+// Mock expo-speech (commented out temporarily - package may not be installed)
+/*
 jest.mock('expo-speech', () => ({
   speak: jest.fn(),
   stop: jest.fn(),
@@ -14,18 +18,10 @@ jest.mock('expo-speech', () => ({
   ])),
   isSpeakingAsync: jest.fn(() => Promise.resolve(false)),
 }));
+*/
 
-// Mock @react-native-voice/voice
-jest.mock('@react-native-voice/voice', () => ({
-  default: {
-    start: jest.fn(),
-    stop: jest.fn(),
-    destroy: jest.fn(),
-    removeAllListeners: jest.fn(),
-    isAvailable: jest.fn(() => Promise.resolve(true)),
-    getSpeechRecognitionServices: jest.fn(() => Promise.resolve([])),
-  },
-}));
+// Mock removed native speech services
+// No longer needed since we use AI-based speech services
 
 // Mock react-native modules
 jest.mock('react-native', () => {

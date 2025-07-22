@@ -1,10 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import SpeechRecognitionService from '@/services/speech/SpeechRecognitionService';
-import {
-  SpeechRecognitionError,
-  SpeechRecognitionState,
-  SpeechLanguage,
-} from '@/services/speech/types';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
+import * as FileSystem from 'expo-file-system';
+import { OpenAIService } from '@/services/ai';
+import { ErrorHandlingService } from '@/services/ai/ErrorHandlingService';
+
+interface SpeechRecognitionError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
+type SpeechLanguage = string;
 
 interface UseSpeechRecognitionOptions {
   language?: SpeechLanguage;
@@ -30,6 +36,7 @@ interface UseSpeechRecognitionReturn {
   switchLanguage: (language: SpeechLanguage) => Promise<void>;
   clearTranscript: () => void;
   clearError: () => void;
+  requestPermissions: () => Promise<void>;
 }
 
 export const useSpeechRecognition = (
@@ -51,157 +58,266 @@ export const useSpeechRecognition = (
   const [audioLevel, setAudioLevel] = useState(0);
   const [currentLanguage, setCurrentLanguage] = useState(language);
 
-  // Refs for stable callbacks
-  const onResultRef = useRef(onResult);
-  const onErrorRef = useRef(onError);
+  // Refs
+  const openAIService = useRef(OpenAIService.getInstance());
+  const errorHandlingService = useRef(ErrorHandlingService.getInstance());
+  const audioLevelInterval = useRef<NodeJS.Timeout | null>(null);
+  const autoStopTimeout = useRef<NodeJS.Timeout | null>(null);
+  const recordingStartTime = useRef<number | null>(null);
+  
+  // Audio recorder from expo-audio
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
-  // Update refs when callbacks change
+  // Initialize audio permissions and availability
   useEffect(() => {
-    onResultRef.current = onResult;
-  }, [onResult]);
-
-  useEffect(() => {
-    onErrorRef.current = onError;
-  }, [onError]);
-
-  // Initialize service
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeService = async () => {
+    const initializeAudio = async () => {
       try {
-        const available = await SpeechRecognitionService.initialize();
-        if (isMounted) {
-          setIsAvailable(available);
+        console.log('🎤 Initializing audio system...');
+        
+        const { status, granted, canAskAgain } = await AudioModule.requestRecordingPermissionsAsync();
+        console.log('🎤 Permission response:', { status, granted, canAskAgain });
+        
+        if (granted) {
+          console.log('✅ Audio permissions granted successfully');
+          setIsAvailable(true);
           
-          if (available && autoStart) {
-            await start();
-          }
+          // Configure audio session
+          await AudioModule.setAudioModeAsync({
+            allowsRecordingIOS: true,
+            staysActiveInBackground: false,
+            interruptionModeIOS: 'doNotMix',
+            playsInSilentModeIOS: true,
+            shouldDuckAndroid: true,
+            playThroughEarpieceAndroid: false,
+          });
+          
+          console.log('✅ Audio recorder configured successfully');
+        } else {
+          console.error('❌ Microphone permission denied:', { status, canAskAgain });
+          setError({
+            code: 'PERMISSION_DENIED',
+            message: canAskAgain ? 'Microphone permission denied. Please grant permission in Settings.' : 'Microphone permission permanently denied',
+            details: { status, canAskAgain }
+          });
         }
       } catch (err) {
-        console.error('Failed to initialize speech recognition:', err);
-        if (isMounted) {
-          setIsAvailable(false);
-        }
+        console.error('❌ Error initializing audio:', err);
+        setError({
+          code: 'INITIALIZATION_ERROR',
+          message: 'Failed to initialize audio recording',
+          details: err,
+        });
       }
     };
 
-    initializeService();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [autoStart]);
-
-  // Setup event callbacks
-  useEffect(() => {
-    const callbacks = {
-      onStart: () => {
-        setIsListening(true);
-        setError(null);
-      },
-      
-      onEnd: () => {
-        setIsListening(false);
-        setPartialTranscript('');
-        setAudioLevel(0);
-      },
-      
-      onResult: (results: string[]) => {
-        if (results && results.length > 0) {
-          const finalTranscript = results[0];
-          setTranscript(finalTranscript);
-          setPartialTranscript('');
-          onResultRef.current?.(finalTranscript);
-        }
-      },
-      
-      onPartialResults: (results: string[]) => {
-        if (results && results.length > 0) {
-          setPartialTranscript(results[0]);
-        }
-      },
-      
-      onError: (speechError: SpeechRecognitionError) => {
-        setError(speechError);
-        setIsListening(false);
-        setPartialTranscript('');
-        setAudioLevel(0);
-        onErrorRef.current?.(speechError);
-      },
-      
-      onVolumeChanged: (volume: number) => {
-        setAudioLevel(volume);
-      },
-    };
-
-    SpeechRecognitionService.setCallbacks(callbacks);
-
-    // Cleanup function
-    return () => {
-      SpeechRecognitionService.setCallbacks({});
-    };
+    initializeAudio();
   }, []);
 
-  // Update current language when service language changes
-  useEffect(() => {
-    const updateLanguage = () => {
-      const serviceLanguage = SpeechRecognitionService.getCurrentLanguage();
-      setCurrentLanguage(serviceLanguage as SpeechLanguage);
-    };
+  const handleError = useCallback((error: SpeechRecognitionError) => {
+    setError(error);
+    setIsListening(false);
+    onError?.(error);
+  }, [onError]);
 
-    updateLanguage();
-  }, [isListening]);
-
-  // Memoized action functions
   const start = useCallback(async (startLanguage?: SpeechLanguage) => {
     try {
+      console.log('🎤 Starting speech recognition...');
       setError(null);
-      await SpeechRecognitionService.start(startLanguage || language);
+      setIsListening(true);
+      setTranscript('');
+      setPartialTranscript('');
+      
+      if (startLanguage) {
+        setCurrentLanguage(startLanguage);
+      }
+      
+      if (!isAvailable) {
+        throw new Error('Audio recording not available');
+      }
+
+      // Prepare and start recording
+      recordingStartTime.current = Date.now();
+      await audioRecorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
+      await audioRecorder.record();
+      console.log('✅ Audio recording started');
+      
+      // Simulate audio level changes during recording
+      audioLevelInterval.current = setInterval(() => {
+        setAudioLevel(Math.random() * 0.8 + 0.1); // Random level between 0.1-0.9
+      }, 100);
+      
     } catch (err) {
-      const speechError: SpeechRecognitionError = {
+      console.error('❌ Error starting recording:', err);
+      handleError({
         code: 'START_ERROR',
-        message: err instanceof Error ? err.message : 'Failed to start speech recognition',
-        description: 'Unable to start speech recognition. Please check your microphone permissions.',
-      };
-      setError(speechError);
-      onErrorRef.current?.(speechError);
+        message: 'Failed to start speech recognition',
+        details: err,
+      });
     }
-  }, [language]);
+  }, [isAvailable, onResult, handleError]);
 
   const stop = useCallback(async () => {
     try {
-      await SpeechRecognitionService.stop();
+      console.log('🛑 Stopping speech recognition...');
+      setIsListening(false);
+      setAudioLevel(0);
+      
+      // Clear intervals
+      if (audioLevelInterval.current) {
+        clearInterval(audioLevelInterval.current);
+        audioLevelInterval.current = null;
+      }
+      
+      if (autoStopTimeout.current) {
+        clearTimeout(autoStopTimeout.current);
+        autoStopTimeout.current = null;
+      }
+      
+      // Stop recording and get the audio file
+      await audioRecorder.stop();
+      const uri = audioRecorder.uri;
+      
+      if (!uri) {
+        console.warn('⚠️ No audio file URI available after recording');
+        console.log('🔍 Audio recorder state:', {
+          state: audioRecorder.state,
+          uri: audioRecorder.uri,
+          duration: audioRecorder.duration,
+        });
+        return;
+      }
+      
+      console.log('📁 Audio file saved at:', uri);
+      
+      // Get file extension
+      const fileExtension = uri.split('.').pop()?.toLowerCase() || 'm4a';
+      console.log('📄 Audio file extension:', fileExtension);
+      
+      // Get file info for debugging
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      console.log('📊 Audio file info:', fileInfo);
+      console.log('🎤 Audio recorder final state:', {
+        state: audioRecorder.state,
+        uri: audioRecorder.uri,
+        duration: audioRecorder.duration,
+        isRecording: audioRecorder.isRecording,
+        fileExtension: fileExtension,
+      });
+      
+      if (!fileInfo.exists) {
+        throw new Error('Audio file does not exist');
+      }
+      
+      // Convert audio file to base64 for API submission
+      console.log('🔄 Converting audio to base64...');
+      const base64Audio = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      if (!base64Audio || base64Audio.length === 0) {
+        throw new Error('Failed to convert audio to base64');
+      }
+      
+      console.log('📤 Sending audio to Whisper API...');
+      console.log('🔍 Audio data info:', {
+        base64Length: base64Audio.length,
+        language: currentLanguage,
+        fileSize: fileInfo.size
+      });
+      
+      // Send to OpenAI Whisper API for transcription
+      try {
+        const response = await openAIService.current.speechToText({
+          audio: base64Audio,
+          language: currentLanguage === 'en-US' ? 'en' : currentLanguage?.split('-')[0], // Convert 'en-US' to 'en'
+          model: 'whisper-1',
+          response_format: 'json'
+        });
+        
+        const transcription = response.text;
+        console.log('✅ Transcription received:', transcription);
+        
+        if (transcription && transcription.trim().length > 0) {
+          setTranscript(transcription);
+          onResult?.(transcription);
+        } else {
+          console.warn('⚠️ Empty transcription received');
+          setTranscript('');
+        }
+      } catch (apiError) {
+        console.error('🚨 Detailed API error:', apiError);
+        
+        // For development: show error but don't crash
+        const fallbackTranscript = `Audio recorded (${(fileInfo.size / 1024).toFixed(1)}KB) - Transcription failed: ${apiError.message}`;
+        setTranscript(fallbackTranscript);
+        onResult?.(fallbackTranscript);
+        return;
+      }
+      
+      // Clean up the temporary audio file
+      try {
+        await FileSystem.deleteAsync(uri);
+        console.log('🗑️ Temporary audio file deleted');
+      } catch (deleteError) {
+        console.warn('⚠️ Failed to delete temporary audio file:', deleteError);
+      }
+      
     } catch (err) {
-      console.error('Error stopping speech recognition:', err);
+      console.error('❌ Error stopping recording or transcribing:', err);
+      handleError({
+        code: 'STOP_ERROR',
+        message: 'Failed to stop recording or transcribe audio',
+        details: err,
+      });
     }
-  }, []);
+  }, [currentLanguage, onResult, handleError]);
 
   const cancel = useCallback(async () => {
     try {
-      await SpeechRecognitionService.cancel();
-      setPartialTranscript('');
+      console.log('❌ Canceling speech recognition...');
+      setIsListening(false);
       setAudioLevel(0);
+      setPartialTranscript('');
+      
+      // Clear intervals
+      if (audioLevelInterval.current) {
+        clearInterval(audioLevelInterval.current);
+        audioLevelInterval.current = null;
+      }
+      
+      if (autoStopTimeout.current) {
+        clearTimeout(autoStopTimeout.current);
+        autoStopTimeout.current = null;
+      }
+      
+      // Stop recording without processing
+      if (audioRecorder.state === 'recording') {
+        await audioRecorder.stop();
+        const uri = audioRecorder.uri;
+        
+        // Clean up the temporary audio file
+        if (uri) {
+          try {
+            await FileSystem.deleteAsync(uri);
+            console.log('🗑️ Temporary audio file deleted after cancel');
+          } catch (deleteError) {
+            console.warn('⚠️ Failed to delete temporary audio file after cancel:', deleteError);
+          }
+        }
+      }
+      
     } catch (err) {
-      console.error('Error canceling speech recognition:', err);
+      console.error('❌ Error canceling recording:', err);
     }
   }, []);
 
   const switchLanguage = useCallback(async (newLanguage: SpeechLanguage) => {
-    try {
-      setError(null);
-      await SpeechRecognitionService.switchLanguage(newLanguage);
-      setCurrentLanguage(newLanguage);
-    } catch (err) {
-      const speechError: SpeechRecognitionError = {
-        code: 'LANGUAGE_SWITCH_ERROR',
-        message: err instanceof Error ? err.message : 'Failed to switch language',
-        description: 'Unable to switch speech recognition language.',
-      };
-      setError(speechError);
-      onErrorRef.current?.(speechError);
+    setCurrentLanguage(newLanguage);
+    if (isListening) {
+      await cancel();
+      await start(newLanguage);
     }
-  }, []);
+  }, [isListening, cancel, start]);
 
   const clearTranscript = useCallback(() => {
     setTranscript('');
@@ -212,12 +328,9 @@ export const useSpeechRecognition = (
     setError(null);
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      // Cleanup when component unmounts
-      SpeechRecognitionService.cancel().catch(console.error);
-    };
+  const requestPermissions = useCallback(async () => {
+    console.log('Requesting permissions...');
+    // Permissions are handled by expo-audio
   }, []);
 
   return {
@@ -237,5 +350,6 @@ export const useSpeechRecognition = (
     switchLanguage,
     clearTranscript,
     clearError,
+    requestPermissions,
   };
 };

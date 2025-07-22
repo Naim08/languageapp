@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { SpeechLanguage } from '../services/speech/types';
 import { getLanguageInfo, isLanguageSupported } from '../services/speech/languages';
-import speechService from '../services/speech/SpeechRecognitionService';
 
 export interface UseLanguageSwitcherReturn {
   currentLanguage: SpeechLanguage;
@@ -26,24 +25,7 @@ export const useLanguageSwitcher = (
         return false;
       }
 
-      // If speech recognition is currently running, restart with new language
-      const wasListening = speechService.isListening();
-      
-      if (wasListening) {
-        await speechService.stop();
-        // Brief pause to ensure clean stop
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      // Update the service language
-      speechService.setLanguage(language);
       setCurrentLanguage(language);
-
-      // Restart if it was listening before
-      if (wasListening) {
-        await speechService.start(language);
-      }
-
       return true;
     } catch (error) {
       console.error('Failed to switch language:', error);
