@@ -22,7 +22,7 @@ Our app already has a robust speech recognition system using:
 ### Existing Dependencies
 - `@react-native-voice/voice`: Native speech recognition
 - `expo-speech`: Text-to-speech functionality
-- `expo-av`: Audio recording and playback
+- `expo-audio`: Audio recording and playback (migrated from expo-av)
 
 ### Current Type Definitions
 Located in `src/services/speech/types.ts`:

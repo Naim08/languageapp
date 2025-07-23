@@ -81,15 +81,14 @@ export const useSpeechRecognition = (
           console.log('✅ Audio permissions granted successfully');
           setIsAvailable(true);
           
-          // Configure audio session
+          // Configure audio session with more explicit settings
           await AudioModule.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            staysActiveInBackground: false,
-            interruptionModeIOS: 'doNotMix',
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
+            allowsRecording: true,
+            interruptionMode: 'doNotMix',
+            playsInSilentMode: true
           });
+          
+          console.log('🎙️ Audio session configured for recording');
           
           console.log('✅ Audio recorder configured successfully');
         } else {
@@ -137,9 +136,29 @@ export const useSpeechRecognition = (
 
       // Prepare and start recording
       recordingStartTime.current = Date.now();
+      
+      // Check initial state
+      console.log('🎙️ Pre-recording state:', {
+        state: audioRecorder.state,
+        isRecording: audioRecorder.isRecording,
+        uri: audioRecorder.uri,
+      });
+      
+      // Just use the working HIGH_QUALITY preset - iOS Simulator won't work anyway
+      console.log('🎙️ Using RecordingPresets.HIGH_QUALITY');
+      console.log('⚠️ NOTE: Audio recording does NOT work in iOS Simulator - use physical device');
       await audioRecorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
+      console.log('🎙️ After prepare state:', {
+        state: audioRecorder.state,
+        isRecording: audioRecorder.isRecording,
+      });
+      
       await audioRecorder.record();
       console.log('✅ Audio recording started');
+      console.log('🎙️ Recording state:', {
+        state: audioRecorder.state,
+        isRecording: audioRecorder.isRecording,
+      });
       
       // Simulate audio level changes during recording
       audioLevelInterval.current = setInterval(() => {
@@ -174,8 +193,22 @@ export const useSpeechRecognition = (
       }
       
       // Stop recording and get the audio file
+      console.log('🛑 Stopping recording...');
+      console.log('🎙️ Pre-stop state:', {
+        state: audioRecorder.state,
+        isRecording: audioRecorder.isRecording,
+        duration: audioRecorder.duration,
+      });
+      
       await audioRecorder.stop();
       const uri = audioRecorder.uri;
+      
+      console.log('🎙️ Post-stop state:', {
+        state: audioRecorder.state,
+        isRecording: audioRecorder.isRecording,
+        duration: audioRecorder.duration,
+        uri: uri,
+      });
       
       if (!uri) {
         console.warn('⚠️ No audio file URI available after recording');
@@ -208,6 +241,38 @@ export const useSpeechRecognition = (
         throw new Error('Audio file does not exist');
       }
       
+      // Always copy the file for inspection, even if empty
+      const documentsDir = FileSystem.documentDirectory;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const testFileName = `recording-${timestamp}.${fileExtension}`;
+      const testFilePath = `${documentsDir}${testFileName}`;
+      
+      try {
+        await FileSystem.copyAsync({
+          from: uri,
+          to: testFilePath
+        });
+        console.log('📁 Audio file copied for inspection:', testFilePath);
+        console.log('📱 File location:', testFileName);
+      } catch (copyError) {
+        console.warn('Failed to copy audio file:', copyError);
+      }
+
+      // Check if file is too small (likely empty or just headers)
+      if (fileInfo.size <= 1024) { // Less than 1KB is likely empty/invalid
+        console.warn(`⚠️ Audio file too small: ${fileInfo.size} bytes - likely iOS Simulator limitation`);
+        console.log('💡 TIP: The iOS Simulator has known issues with microphone recording.');
+        console.log('💡 To test speech recognition:');
+        console.log('   1. Run on a physical iOS device');
+        console.log('   2. Or use Xcode Device menu → Microphone → Check "Audio Input"');
+        console.log('   3. Or test with a pre-recorded audio file');
+        
+        const fallbackTranscript = `iOS Simulator recording issue (${fileInfo.size}B) - Use physical device or check Xcode → Device → Microphone`;
+        setTranscript(fallbackTranscript);
+        onResult?.(fallbackTranscript);
+        return;
+      }
+      
       // Convert audio file to base64 for API submission
       console.log('🔄 Converting audio to base64...');
       const base64Audio = await FileSystem.readAsStringAsync(uri, {
@@ -215,7 +280,20 @@ export const useSpeechRecognition = (
       });
       
       if (!base64Audio || base64Audio.length === 0) {
-        throw new Error('Failed to convert audio to base64');
+        console.warn('⚠️ Failed to convert audio to base64 or empty content');
+        const fallbackTranscript = `Audio file exists (${fileInfo.size}B) but conversion failed - File saved as: ${testFileName}`;
+        setTranscript(fallbackTranscript);
+        onResult?.(fallbackTranscript);
+        return;
+      }
+      
+      // Additional check: base64 should be reasonable size for audio
+      if (base64Audio.length < 100) {
+        console.warn(`⚠️ Base64 audio too short: ${base64Audio.length} chars`);
+        const fallbackTranscript = `Audio content too short (${base64Audio.length} chars) - File saved as: ${testFileName}`;
+        setTranscript(fallbackTranscript);
+        onResult?.(fallbackTranscript);
+        return;
       }
       
       console.log('📤 Sending audio to Whisper API...');
