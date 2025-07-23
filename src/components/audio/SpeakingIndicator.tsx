@@ -198,6 +198,7 @@ export const SpeakingIndicator: React.FC<SpeakingIndicatorProps> = ({
 
     return (
       <Animated.View
+        testID="speaking-indicator"
         style={[
           styles.pulseCircle,
           {
@@ -215,7 +216,7 @@ export const SpeakingIndicator: React.FC<SpeakingIndicatorProps> = ({
 
   const renderWaveIndicator = () => {
     return (
-      <View style={styles.waveContainer}>
+      <View testID="speaking-indicator" style={styles.waveContainer}>
         {animationValues.map((value, index) => {
           const scale = value.interpolate({
             inputRange: [0, 1],
@@ -245,7 +246,7 @@ export const SpeakingIndicator: React.FC<SpeakingIndicatorProps> = ({
 
   const renderDotsIndicator = () => {
     return (
-      <View style={styles.dotsContainer}>
+      <View testID="speaking-indicator" style={styles.dotsContainer}>
         {animationValues.map((value, index) => {
           const translateY = value.interpolate({
             inputRange: [0, 1],
@@ -275,7 +276,7 @@ export const SpeakingIndicator: React.FC<SpeakingIndicatorProps> = ({
 
   const renderBarsIndicator = () => {
     return (
-      <View style={styles.barsContainer}>
+      <View testID="speaking-indicator" style={styles.barsContainer}>
         {animationValues.map((value, index) => {
           const height = value.interpolate({
             inputRange: [0, 1],
@@ -309,7 +310,7 @@ export const SpeakingIndicator: React.FC<SpeakingIndicatorProps> = ({
     });
 
     return (
-      <View style={[styles.progressContainer, { width: size * 2, height: size / 4 }]}>
+      <View testID="speaking-indicator" style={[styles.progressContainer, { width: size * 2, height: size / 4 }]}>
         <View style={[styles.progressBackground, { backgroundColor: `${color}30` }]} />
         <Animated.View
           style={[
@@ -342,7 +343,10 @@ export const SpeakingIndicator: React.FC<SpeakingIndicatorProps> = ({
   };
 
   return (
-    <View style={[styles.container, { opacity: isActive ? 1 : 0.3 }, style]}>
+    <View
+      testID="speaking-indicator-container"
+      style={[styles.container, { opacity: isActive ? 1 : 0.3 }, style]}
+    >
       {renderIndicator()}
       {showText && isActive && (
         <Text style={[styles.speakingText, { color }]}>{text}</Text>

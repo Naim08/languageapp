@@ -2,6 +2,9 @@ import 'react-native-gesture-handler/jestSetup';
 
 // Set global variables required by React Native
 global.__DEV__ = true;
+// Prevent errors when React Native internals expect the batched bridge config
+// to be present.
+global.__fbBatchedBridgeConfig = {};
 
 // Mock expo-speech (commented out temporarily - package may not be installed)
 /*
@@ -34,14 +37,67 @@ jest.mock('react-native', () => {
         remove: jest.fn(),
       })),
       removeEventListener: jest.fn(),
+      getCurrentAppState: jest.fn(),
     },
     Platform: {
       OS: 'ios',
       Version: '15.0',
       select: jest.fn((obj) => obj.ios),
     },
+    NativeModules: {
+      PlatformConstants: { forceTouchAvailable: false, osVersion: '15.0' },
+      Dimensions: {
+        get: jest.fn(() => ({
+          window: { width: 320, height: 640, scale: 2, fontScale: 2 },
+          screen: { width: 320, height: 640, scale: 2, fontScale: 2 },
+        })),
+        set: jest.fn(),
+      },
+    },
   };
 });
+
+// Mock TurboModuleRegistry used to fetch native constants
+jest.mock('react-native/Libraries/TurboModule/TurboModuleRegistry', () => ({
+  getEnforcing: () => ({
+    getConstants: () => ({
+      forceTouchAvailable: false,
+      osVersion: '15.0',
+      systemName: 'iOS',
+      interfaceIdiom: 'test',
+      Dimensions: {
+        window: { width: 320, height: 640, scale: 2, fontScale: 2 },
+        screen: { width: 320, height: 640, scale: 2, fontScale: 2 },
+      },
+    }),
+  }),
+  get: () => ({
+    getConstants: () => ({
+      Dimensions: {
+        window: { width: 320, height: 640, scale: 2, fontScale: 2 },
+        screen: { width: 320, height: 640, scale: 2, fontScale: 2 },
+      },
+    }),
+  }),
+}));
+
+// Mock the native AppState module used by React Native
+jest.mock('react-native/Libraries/AppState/NativeAppState', () => ({
+  getConstants: () => ({ initialAppState: 'active' }),
+  getCurrentAppState: (cb) => cb({ app_state: 'active' }),
+  addListener: jest.fn(),
+  removeListeners: jest.fn(),
+}));
+
+
+// AccessibilityInfo pulls in native modules that rely on platform specific
+// resolution. Mock it to avoid resolving deep react-native internals.
+jest.mock('react-native/Libraries/Components/AccessibilityInfo/AccessibilityInfo', () => ({
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  announceForAccessibility: jest.fn(),
+  setAccessibilityFocus: jest.fn(),
+}));
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
