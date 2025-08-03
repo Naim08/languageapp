@@ -41,3 +41,6 @@ yarn-error.*
 package-lock.json
 
 .vscode/
+
+.claude
+token.js

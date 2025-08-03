@@ -1,1 +1,157 @@
-import React, { useState } from 'react';import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';import { useTextToSpeech } from '../../hooks/useTextToSpeech';interface TTSError {  code: string;  message: string;}export const TTSExample: React.FC = () => {  const [customText, setCustomText] = useState('Hello, this is a test of the text-to-speech functionality.');  const {    isAvailable,    isSpeaking,    error,    speak,    stop,    clearError,  } = useTextToSpeech({    onStart: () => {      console.log('Started speaking');    },    onDone: () => {      console.log('Finished speaking');    },    onError: (error: TTSError) => {      console.error('TTS Error:', error);      Alert.alert('TTS Error', error.message);    },  });  const handleSpeak = async () => {    if (!customText.trim()) {      Alert.alert('Error', 'Please enter some text to speak');      return;    }    try {      await speak(customText);    } catch (error) {      console.error('Error speaking:', error);    }  };  if (!isAvailable) {    return (      <View style={styles.container}>        <Text style={styles.errorText}>Text-to-Speech is not available</Text>      </View>    );  }  return (    <View style={styles.container}>      <Text style={styles.title}>TTS Example</Text>            <TextInput        style={styles.textInput}        value={customText}        onChangeText={setCustomText}        placeholder="Enter text to speak..."        multiline      />      <View style={styles.controls}>        <TouchableOpacity          style={[styles.button, isSpeaking && styles.disabledButton]}          onPress={handleSpeak}          disabled={isSpeaking}        >          <Text style={styles.buttonText}>            {isSpeaking ? 'Speaking...' : 'Speak'}          </Text>        </TouchableOpacity>        <TouchableOpacity          style={[styles.button, !isSpeaking && styles.disabledButton]}          onPress={stop}          disabled={!isSpeaking}        >          <Text style={styles.buttonText}>Stop</Text>        </TouchableOpacity>      </View>      {error && (        <View style={styles.errorContainer}>          <Text style={styles.errorText}>Error: {error.message}</Text>          <TouchableOpacity style={styles.clearButton} onPress={clearError}>            <Text style={styles.clearButtonText}>Clear Error</Text>          </TouchableOpacity>        </View>      )}    </View>  );};const styles = StyleSheet.create({  container: {    flex: 1,    padding: 20,  },  title: {    fontSize: 24,    fontWeight: 'bold',    marginBottom: 20,    textAlign: 'center',  },  textInput: {    borderWidth: 1,    borderColor: '#ccc',    borderRadius: 8,    padding: 10,    minHeight: 100,    marginBottom: 20,    textAlignVertical: 'top',  },  controls: {    flexDirection: 'row',    justifyContent: 'space-around',    marginBottom: 20,  },  button: {    backgroundColor: '#007AFF',    paddingHorizontal: 20,    paddingVertical: 10,    borderRadius: 8,  },  disabledButton: {    backgroundColor: '#ccc',  },  buttonText: {    color: 'white',    fontWeight: 'bold',  },  errorContainer: {    backgroundColor: '#ffebee',    padding: 10,    borderRadius: 8,    marginTop: 10,  },  errorText: {    color: '#c62828',    marginBottom: 10,  },  clearButton: {    backgroundColor: '#f44336',    paddingHorizontal: 10,    paddingVertical: 5,    borderRadius: 4,    alignSelf: 'flex-start',  },  clearButtonText: {    color: 'white',    fontSize: 12,  },});
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { useTextToSpeech } from '../../hooks/useTextToSpeech';
+
+interface TTSError {
+  code: string;
+  message: string;
+}
+
+export const TTSExample: React.FC = () => {
+  const [customText, setCustomText] = useState('Hello, this is a test of the text-to-speech functionality.');
+  
+  const {
+    isAvailable,
+    isSpeaking,
+    error,
+    speak,
+    stop,
+    clearError,
+  } = useTextToSpeech({
+    onStart: () => {
+      console.log('Started speaking');
+    },
+    onDone: () => {
+      console.log('Finished speaking');
+    },
+    onError: (error: TTSError) => {
+      console.error('TTS Error:', error);
+      Alert.alert('TTS Error', error.message);
+    },
+  });
+
+  const handleSpeak = async () => {
+    if (!customText.trim()) {
+      Alert.alert('Error', 'Please enter some text to speak');
+      return;
+    }
+    
+    try {
+      await speak(customText);
+    } catch (error) {
+      console.error('Error speaking:', error);
+    }
+  };
+
+  if (!isAvailable) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Text-to-Speech is not available</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>TTS Example</Text>
+      
+      <TextInput
+        style={styles.textInput}
+        value={customText}
+        onChangeText={setCustomText}
+        placeholder="Enter text to speak..."
+        multiline
+      />
+
+      <View style={styles.controls}>
+        <TouchableOpacity
+          style={[styles.button, isSpeaking && styles.disabledButton]}
+          onPress={handleSpeak}
+          disabled={isSpeaking}
+        >
+          <Text style={styles.buttonText}>
+            {isSpeaking ? 'Speaking...' : 'Speak'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, !isSpeaking && styles.disabledButton]}
+          onPress={stop}
+          disabled={!isSpeaking}
+        >
+          <Text style={styles.buttonText}>Stop</Text>
+        </TouchableOpacity>
+      </View>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {error.message}</Text>
+          <TouchableOpacity style={styles.clearButton} onPress={clearError}>
+            <Text style={styles.clearButtonText}>Clear Error</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    minHeight: 100,
+    marginBottom: 20,
+    textAlignVertical: 'top',
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  errorText: {
+    color: '#c62828',
+    marginBottom: 10,
+  },
+  clearButton: {
+    backgroundColor: '#f44336',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  clearButtonText: {
+    color: 'white',
+    fontSize: 12,
+  },
+});
