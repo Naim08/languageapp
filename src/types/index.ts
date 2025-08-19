@@ -40,3 +40,6 @@ export interface SubscriptionState {
   currentTier?: string;
   autoRenewEnabled: boolean;
 }
+
+// Export exercise types
+export * from './exercise';

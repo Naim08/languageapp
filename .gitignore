@@ -44,3 +44,13 @@ package-lock.json
 
 .claude
 token.js
+
+${input:TASK_MANAGER_FILE_PATH}
+scripts
+.aider*
+scripts/
+remote-image-generator
+docs
+patches/*
+archives
+.crush

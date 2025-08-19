@@ -20,6 +20,7 @@ export interface Theme {
     lg: number;
     xl: number;
     xxl: number;
+    xxxl: number;
   };
   borderRadius: {
     sm: number;
@@ -28,11 +29,10 @@ export interface Theme {
     full: number;
   };
   typography: {
-    h1: number;
-    h2: number;
-    h3: number;
-    body: number;
-    caption: number;
+    headline: { size: number; lineHeight: number; weight: string };
+    title: { size: number; lineHeight: number; weight: string };
+    body: { size: number; lineHeight: number; weight: string };
+    caption: { size: number; lineHeight: number; weight: string };
   };
 }
 

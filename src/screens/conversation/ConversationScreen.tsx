@@ -192,10 +192,9 @@ export const ConversationScreen: React.FC = () => {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ 
               flexDirection: 'row', 
-              gap: theme.spacing.sm,
               paddingHorizontal: theme.spacing.sm
             }}>
-              {PRACTICE_LANGUAGES.map((lang) => (
+              {PRACTICE_LANGUAGES.map((lang, index) => (
                 <TouchableOpacity
                   key={lang.code}
                   onPress={() => handleLanguageChange(lang.code)}
@@ -208,10 +207,10 @@ export const ConversationScreen: React.FC = () => {
                       : theme.colors.bgCard,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: theme.spacing.xs,
+                    marginRight: index < PRACTICE_LANGUAGES.length - 1 ? theme.spacing.sm : 0,
                   }}
                 >
-                  <Text style={{ fontSize: 16 }}>{lang.flag}</Text>
+                  <Text style={{ fontSize: 16, marginRight: theme.spacing.xs }}>{lang.flag}</Text>
                   <Text style={{
                     color: selectedLanguage === lang.code 
                       ? theme.colors.textDark 
@@ -316,20 +315,21 @@ export const ConversationScreen: React.FC = () => {
                 borderRadius: theme.borderRadius.lg,
                 borderBottomLeftRadius: theme.borderRadius.sm,
                 flexDirection: 'row',
-                alignItems: 'center',
-                gap: theme.spacing.sm
+                alignItems: 'center'
               }}>
                 <View style={{
                   width: 8,
                   height: 8,
                   backgroundColor: theme.colors.accent,
                   borderRadius: 4,
+                  marginRight: theme.spacing.xs,
                 }} />
                 <View style={{
                   width: 8,
                   height: 8,
                   backgroundColor: theme.colors.accent,
                   borderRadius: 4,
+                  marginRight: theme.spacing.xs,
                 }} />
                 <View style={{
                   width: 8,
@@ -392,10 +392,9 @@ export const ConversationScreen: React.FC = () => {
           {/* Controls */}
           <View style={{ 
             flexDirection: 'row',
-            gap: theme.spacing.sm,
             alignItems: 'center'
           }}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: theme.spacing.sm }}>
               <Button
                 title={isListening ? 'Stop Recording' : 'Start Speaking'}
                 variant={isListening ? 'secondary' : 'primary'}

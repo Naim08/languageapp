@@ -3,6 +3,7 @@ import { createAudioPlayer } from 'expo-audio';
 import { UnifiedAIService } from '@/services/ai/UnifiedAIService';
 import { TTSVoice, UserLevel } from '@/services/speech/types';
 import * as FileSystem from 'expo-file-system';
+import logger from '@/services/logging/LoggingService';
 
 interface TTSError {
   code: string;
@@ -59,8 +60,7 @@ export const useTextToSpeech = (
 
   const speak = useCallback(async (text: string, speakOptions?: { voice?: TTSVoice; speed?: number }) => {
     try {
-      console.log('🎤 TTS: Starting to speak with unified-tts:', text);
-      console.log('🎤 TTS: Using voice:', speakOptions?.voice || voice);
+      logger.tts.info('Starting to speak with unified-tts', { text, voice: speakOptions?.voice || voice });
       setError(null);
       setIsSpeaking(true);
       onStart?.();
@@ -74,7 +74,7 @@ export const useTextToSpeech = (
         provider,
       });
 
-      console.log('🎤 TTS: Received audio data from unified-tts:', {
+      logger.tts.debug('Received audio data from unified-tts', {
         size: audioData.byteLength,
         type: 'ArrayBuffer'
       });
@@ -96,7 +96,7 @@ export const useTextToSpeech = (
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      console.log('🎤 TTS: Audio saved to:', fileUri);
+      logger.tts.debug('Audio saved to file', { fileUri });
 
       // Create audio player with the file using expo-audio
       const player = createAudioPlayer({ uri: fileUri });
@@ -105,7 +105,7 @@ export const useTextToSpeech = (
       // Set up event listeners
       player.addListener('playbackStatusUpdate', (status) => {
         if (status.isLoaded && status.didJustFinish) {
-          console.log('🎤 TTS: Playback finished');
+          logger.tts.info('Playback finished');
           setIsSpeaking(false);
           onDone?.();
           // Clean up the temporary file
@@ -115,10 +115,10 @@ export const useTextToSpeech = (
 
       // Play the audio
       player.play();
-      console.log('🎤 TTS: Playing OpenAI/Gemini audio via expo-audio');
+      logger.tts.info('Playing audio via expo-audio');
 
     } catch (err) {
-      console.error('TTS Error:', err);
+      logger.tts.error('TTS Error', err instanceof Error ? err : new Error(String(err)));
       handleError({
         code: 'TTS_ERROR',
         message: err instanceof Error ? err.message : 'Failed to speak text',
@@ -129,7 +129,7 @@ export const useTextToSpeech = (
 
   const stop = useCallback(async () => {
     try {
-      console.log('🎤 TTS: Stopping speech');
+      logger.tts.info('Stopping speech');
       
       if (playerRef.current) {
         playerRef.current.pause();
@@ -140,7 +140,7 @@ export const useTextToSpeech = (
       setIsSpeaking(false);
       onDone?.();
     } catch (err) {
-      console.error('TTS Stop Error:', err);
+      logger.tts.error('TTS Stop Error', err instanceof Error ? err : new Error(String(err)));
       handleError({
         code: 'TTS_STOP_ERROR',
         message: 'Failed to stop speech',
@@ -163,11 +163,23 @@ export const useTextToSpeech = (
     ];
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount with better error handling
   useEffect(() => {
     return () => {
       if (playerRef.current) {
-        playerRef.current.remove().catch(() => {});
+        // First try to stop playback
+        try {
+          playerRef.current.pause();
+        } catch (e) {
+          // Ignore pause errors
+        }
+        
+        // Then remove the player
+        playerRef.current.remove().catch((error: any) => {
+          logger.tts.warn('Failed to remove audio player on cleanup', error);
+        });
+        
+        // Clear reference
         playerRef.current = null;
       }
     };

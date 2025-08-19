@@ -1,78 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { ThemeProvider, useTheme } from './src/theme';
+import { ThemeProvider } from './src/theme';
 import { AuthProvider } from './src/providers/AuthProvider';
 import { AuthGate } from './src/navigation/AuthGate';
-import { useAuth } from './src/hooks/useAuth';
-import { TtsTestingDemo, SpeechRecognitionDemo, SpeechDebugger, WhisperManager } from './src/components/speech';
-import VoiceTestWithLanguages from './src/components/speech/VoiceTestWithLanguages';
-import VoiceTestComponent from './src/components/speech/VoiceTestComponent';
-import TestingDashboard from './src/screens/testing/TestingDashboard';
-
-type TestComponent = 'dashboard' | 'TtsTestingDemo' | 'SpeechRecognitionDemo' | 'VoiceTestWithLanguages' | 'VoiceTestComponent' | 'SpeechDebugger' | 'WhisperManager';
+import { Navigation } from './src/navigation/Navigation';
 
 function AppContent() {
-  const [activeTest, setActiveTest] = useState<TestComponent>('dashboard');
-  const { theme } = useTheme();
-  const { signOut, user } = useAuth();
-
-  const handleNavigateToTest = (testComponent: string) => {
-    setActiveTest(testComponent as TestComponent);
-  };
-
-  const handleBackToDashboard = () => {
-    setActiveTest('dashboard');
-  };
-
-  const renderTestComponent = () => {
-    switch (activeTest) {
-      case 'TtsTestingDemo':
-        return <TtsTestingDemo />;
-      case 'SpeechRecognitionDemo':
-        return <SpeechRecognitionDemo />;
-      case 'VoiceTestWithLanguages':
-        return <VoiceTestWithLanguages />;
-      case 'VoiceTestComponent':
-        return <VoiceTestComponent />;
-      case 'SpeechDebugger':
-        return <SpeechDebugger />;
-      case 'WhisperManager':
-        return <WhisperManager />;
-      default:
-        return <TestingDashboard onNavigateToTest={handleNavigateToTest} />;
-    }
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <View style={[styles.headerContainer, { backgroundColor: theme.colors.bgCard }]}>
-        {activeTest !== 'dashboard' && (
-          <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: theme.colors.primary }]} 
-            onPress={handleBackToDashboard}
-          >
-            <Text style={[styles.backButtonText, { color: theme.colors.textDark }]}>
-              ← Back to Dashboard
-            </Text>
-          </TouchableOpacity>
-        )}
-        
-        <View style={styles.headerRight}>
-          {user && (
-            <TouchableOpacity 
-              style={styles.signOutButton} 
-              onPress={signOut}
-            >
-              <Text style={styles.signOutText}>Sign Out</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-      {renderTestComponent()}
-    </View>
-  );
+  return <Navigation />;
 }
 
 export default function App() {

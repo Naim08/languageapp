@@ -6,6 +6,7 @@ import * as Linking from 'expo-linking'
 import * as WebBrowser from 'expo-web-browser'
 import { supabase } from '../lib/supabase'
 import { AuthContextType, AuthState, Profile } from '../types/supabase'
+import logger from '../services/logging/LoggingService'
 
 export const AuthContext = createContext<AuthContextType | null>(null)
 

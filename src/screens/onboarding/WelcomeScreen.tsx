@@ -1,137 +1,197 @@
 import React from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, SafeAreaView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Text } from '../../components/ui/Text';
+import { useTheme } from '../../theme/ThemeProvider';
+
+const { width } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
   onComplete: () => void;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
+  const { theme } = useTheme();
+  
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>🎯</Text>
-          </View>
-          <Text style={styles.title}>
-            Welcome to AI Language Tutor
-          </Text>
-          <Text style={styles.subtitle}>
-            Practice speaking with an AI tutor that adapts to your level and provides personalized feedback
-          </Text>
-        </View>
-        
-        <View style={styles.features}>
-          <View style={styles.feature}>
-            <Text style={styles.featureIcon}>🎤</Text>
-            <Text style={styles.featureTitle}>Voice Practice</Text>
-            <Text style={styles.featureText}>Practice pronunciation with AI feedback</Text>
+    <LinearGradient
+      colors={[theme.colors.primary, '#2563EB']} // Modern blue gradient
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.mascotContainer}>
+              <Text style={styles.mascot}>🦉</Text>
+            </View>
+            <Text variant="headline" style={styles.title}>
+              Learn languages{'\n'}with AI
+            </Text>
+            <Text variant="body" style={styles.subtitle}>
+              Fun, personalized, and effective
+            </Text>
           </View>
           
-          <View style={styles.feature}>
-            <Text style={styles.featureIcon}>🧠</Text>
-            <Text style={styles.featureTitle}>Adaptive Learning</Text>
-            <Text style={styles.featureText}>AI adjusts to your skill level automatically</Text>
+          <View style={styles.features}>
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Text style={styles.featureIcon}>🎯</Text>
+              </View>
+              <View style={styles.featureContent}>
+                <Text variant="title" color="dark" style={styles.featureTitle}>Personalized lessons</Text>
+                <Text variant="body" color="muted" style={styles.featureText}>AI adapts to your learning style</Text>
+              </View>
+            </View>
+            
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Text style={styles.featureIcon}>🗣️</Text>
+              </View>
+              <View style={styles.featureContent}>
+                <Text variant="title" color="dark" style={styles.featureTitle}>Practice speaking</Text>
+                <Text variant="body" color="muted" style={styles.featureText}>Get instant pronunciation feedback</Text>
+              </View>
+            </View>
+            
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Text style={styles.featureIcon}>🔥</Text>
+              </View>
+              <View style={styles.featureContent}>
+                <Text variant="title" color="dark" style={styles.featureTitle}>Stay motivated</Text>
+                <Text variant="body" color="muted" style={styles.featureText}>Track streaks and earn rewards</Text>
+              </View>
+            </View>
           </View>
           
-          <View style={styles.feature}>
-            <Text style={styles.featureIcon}>📈</Text>
-            <Text style={styles.featureTitle}>Track Progress</Text>
-            <Text style={styles.featureText}>See your improvement over time</Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, { backgroundColor: theme.colors.bgCard }]} onPress={onComplete} activeOpacity={0.9}>
+              <Text variant="title" style={[styles.buttonText, { color: theme.colors.primary }]}>GET STARTED</Text>
+            </TouchableOpacity>
+            
+            <Text variant="caption" style={styles.disclaimer}>
+              Free to start • No credit card required
+            </Text>
           </View>
         </View>
-        
-        <TouchableOpacity style={styles.button} onPress={onComplete}>
-          <Text style={styles.buttonText}>Start Learning</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+  },
+  safeArea: {
+    flex: 1,
   },
   content: {
     flex: 1,
-    padding: 32,
+    paddingHorizontal: 16, // space-16 (gutters)
     justifyContent: 'space-between',
   },
   header: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 48, // space-48
   },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#DBEAFE',
-    borderRadius: 50,
+  mascotContainer: {
+    width: 120,
+    height: 120,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
+    marginBottom: 24, // space-24
   },
-  icon: {
-    fontSize: 48,
+  mascot: {
+    fontSize: 64,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 42,
+    fontWeight: '800',
     textAlign: 'center',
-    color: '#111827',
-    marginBottom: 16,
+    color: '#FFFFFF',
+    marginBottom: 12, // space-12
+    lineHeight: 48,
   },
   subtitle: {
-    fontSize: 16,
     textAlign: 'center',
-    color: '#6B7280',
-    lineHeight: 24,
-    paddingHorizontal: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   features: {
-    flex: 1,
-    justifyContent: 'center',
-    marginVertical: 40,
+    marginVertical: 32, // space-32
   },
-  feature: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  featureIcon: {
-    fontSize: 32,
-    marginBottom: 12,
-  },
-  featureTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  featureText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    paddingHorizontal: 32,
-  },
-  button: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+  featureCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    padding: 16, // space-16
+    marginBottom: 16, // space-16
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowRadius: 8,
     elevation: 5,
   },
-  buttonText: {
-    color: '#FFFFFF',
+  featureIconContainer: {
+    width: 56,
+    height: 56,
+    backgroundColor: '#F7F7FB',
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  featureIcon: {
+    fontSize: 28,
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#3C3C3C',
+    marginBottom: 4,
+  },
+  featureText: {
+    fontSize: 15,
+    color: '#777777',
+    lineHeight: 20,
+  },
+  buttonContainer: {
+    marginBottom: 32,
+  },
+  button: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 20,
+    borderRadius: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
+    marginBottom: 16,
+  },
+  buttonText: {
+    color: '#58CC02',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  disclaimer: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });

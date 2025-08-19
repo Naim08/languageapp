@@ -24,9 +24,11 @@ export type {
 } from '../../types/edge-functions'
 
 // Core AI Services
-export { OpenAIService, openAIService } from './OpenAIService'
-export { GeminiService, geminiService } from './GeminiService'
-export { UnifiedAIService, unifiedAIService } from './UnifiedAIService'
+export { default as UnifiedAIService } from './UnifiedAIService';
+export { default as OpenAIService } from './OpenAIService';
+export { default as GeminiService } from './GeminiService';
+export { default as PixabayImageService } from './PixabayImageService';
+export { default as UnsplashImageService } from './UnsplashImageService';
 
 // Support Services
 export { RateLimitService, rateLimitService } from './RateLimitService'

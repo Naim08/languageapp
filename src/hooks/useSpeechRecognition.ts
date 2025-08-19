@@ -3,6 +3,7 @@ import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
 import * as FileSystem from 'expo-file-system';
 import { OpenAIService } from '@/services/ai';
 import { ErrorHandlingService } from '@/services/ai/ErrorHandlingService';
+import logger from '@/services/logging/LoggingService';
 
 interface SpeechRecognitionError {
   code: string;
@@ -72,7 +73,7 @@ export const useSpeechRecognition = (
   useEffect(() => {
     const initializeAudio = async () => {
       try {
-        console.log('🎤 Initializing audio system...');
+        logger.stt.info('Initializing audio system');
         
         const { status, granted, canAskAgain } = await AudioModule.requestRecordingPermissionsAsync();
         console.log('🎤 Permission response:', { status, granted, canAskAgain });

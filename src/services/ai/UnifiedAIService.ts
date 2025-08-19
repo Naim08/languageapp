@@ -1,6 +1,7 @@
 import { openAIService, OpenAIService } from './OpenAIService'
 import { geminiService, GeminiService } from './GeminiService'
 import { UserLevel } from '../../types/edge-functions'
+import logger from '../logging/LoggingService'
 
 /**
  * Unified AI Service - Orchestrates OpenAI and Gemini services
